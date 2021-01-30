@@ -42,7 +42,8 @@ class motor:
     # Constructor:
     #
     # Private Functions:-
-    #
+    #   getUnitOfSpeedCode()    -
+    #   getDirectionCode()      -
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def set_slave_addr(self, SlaveAddr):
@@ -242,49 +243,56 @@ class motor:
 
 
     def run(self, Direction, Speed, UnitOfSpeed):
-        dir = ""
-        if( (Direction == "CW") or (Direction == "cw") ):
-            dir = "00"
-        elif( (Direction == "CCW") or (Direction == "ccw") ):
-            dir = "01"
-        else:
-            print("Invalid direction (", Direction, ")")
-            return None
-        
-        uSpd = ""
-        if( (UnitOfSpeed == "RPM") or (UnitOfSpeed == "rpm") ):
-            uSpd = "00"
-        elif( (UnitOfSpeed == "RPH") or (UnitOfSpeed == "rph") ):
-            uSpd = "01"
-        elif( (UnitOfSpeed == "MMps") or (UnitOfSpeed == "mmps") ):
-            uSpd = "02"
-        else:
-            print("Invalid unit of speed (", UnitOfSpeed, ")")
-            return None
+        dir = self.__getDirCode(Direction)
+        uSpd = self.__getUnitCode(UnitOfSpeed)
 
         spd = format(Speed, '#08X')     # Convert int value to hex string
         spd = spd[2:]                   # Discard the 0x prefix from the hex string
+
         self.command = self.__slave_addr + "10002500030601" + dir + uSpd + spd
         print("run cmd - ", self.command)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
-    def move(self):
+    def move(self, Speed, UnitOfSpeed, Type, SAT):
+        spd = format(Speed, '#08X')     # Convert int value to hex string
+        spd = spd[2:]                   # Discard the 0x prefix from the hex string
+        uSpd = self.__getUnitCode(UnitOfSpeed)
+
+        mType = ""
+        sat = ""                        # sat -> steps/angle/time
+
+        if( ( Type == "Linear_CCW" ) or ( Type == "linear_ccw" ) ):
+            mType = "00"
+        elif( ( Type == "Linear_CW" ) or ( Type == "linear_cw" ) ):
+            mType = "01"
+        elif( ( Type == "Rotary_CCW_Angle" ) or ( Type == "rotary_ccw_angle" ) ):
+            mType = "02"
+        elif( ( Type == "Rotary_CW_Angle" ) or ( Type == "rotary_cw_angle" ) ):
+            mType = "03"
+        elif( ( Type == "Rotary_CCW_Time" ) or ( Type == "rotary_ccw_time" ) ):
+            mType = "04"
+        elif( ( Type == "Rotary_CW_Time" ) or ( Type == "rotary_cw_time" ) ):
+            mType = "05"
+        elif( ( Type == "Rotary_CCW_Steps" ) or ( Type == "rotary_ccw_steps" ) ):
+            mType = "06"
+        elif( ( Type == "Rotary_CW_Steps" ) or ( Type == "rotary_cw_steps" ) ):
+            mType = "07"
+
+        if( (mType == "03") or (mType == "03") ):   # If movement type is angle, multiply it by 100
+            SAT = 100                               # This is specified in the datasheet of the motor driver.
+
+        sat = int(SAT)                  # Round off Step/Angle/Time value to an integer
+        sat = format(sat, '#10X')       # Convert int value to hex string
+        sat = sat[2:]                   # Discard 0x prefix from hex string
+
+        self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
         pass
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def go_home(self, Speed, UnitOfSpeed):
-        uSpd = ""
-        if( (UnitOfSpeed == "RPM") or (UnitOfSpeed == "rpm") ):
-            uSpd = "00"
-        elif( (UnitOfSpeed == "RPH") or (UnitOfSpeed == "rph") ):
-            uSpd = "01"
-        elif( (UnitOfSpeed == "MMps") or (UnitOfSpeed == "mmps") ):
-            uSpd = "02"
-        else:
-            print("Invalid unit of speed (", UnitOfSpeed, ")")
-            return None
+        uSpd = self.__getUnitCode(UnitOfSpeed)
         
         spd = format(Speed, '#08X')     # Convert int value to hex string
         spd = spd[2:]                   # Discard the 0x prefix from the hex string
@@ -326,4 +334,33 @@ class motor:
 
     def show_last_command(self):
         print("Last sent command for motor #{mID} - {cmd}".format(mID = self.__id, cmd = self.command))
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+    def __getUnitCode(self, UnitOfSpeed):
+        uSpd = ""
+        if( (UnitOfSpeed == "RPM") or (UnitOfSpeed == "rpm") ):
+            uSpd = "00"
+        elif( (UnitOfSpeed == "RPH") or (UnitOfSpeed == "rph") ):
+            uSpd = "01"
+        elif( (UnitOfSpeed == "MMps") or (UnitOfSpeed == "mmps") ):
+            uSpd = "02"
+        else:
+            print("Invalid unit of speed (", UnitOfSpeed, ")")
+            quit()
+        return uSpd
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+    def __getDirCode(self, Direction):
+        dir = ""
+        if( (Direction == "CW") or (Direction == "cw") ):
+            dir = "00"
+        elif( (Direction == "CCW") or (Direction == "ccw") ):
+            dir = "01"
+        else:
+            print("Invalid direction (", Direction, ")")
+            quit()
+        
+        return dir
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
