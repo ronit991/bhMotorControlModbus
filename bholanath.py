@@ -8,7 +8,7 @@ class motor:
     __current = None            # Current in Ampere
     __microstep = None          # Full, Half, 1/4, 1/8, or 1/16
     __acceleration = None       # Acceleration & Deceleration in step/sec^2.
-    __deceleration = None       # Range => 15 : 59590
+    __deceleration = None       # Range => 15 : 59590 RPM
     __pitch = None              # Pitch in mm/sec
     __speed = None              # Numerical value of speed (Max 4780 RPM)
     __unit_of_speed = None      # Unit - RPM, RPH, mm/sec
@@ -19,31 +19,31 @@ class motor:
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     #                                           Member Function Definitions
     # Public Functions:-
-    #   set_slave_addr()    -
-    #   set_baudrate()      -
-    #   set_current()       -
-    #   set_microstep()     -
-    #   set_acceleration()  -
-    #   set_deceleration()  -
-    #   set_pitch()         -
+    #   set_slave_addr()    - Input = newSlaveAddr (1-247).
+    #   set_baudrate()      - Input => {1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 72000, 115200, 128000}
+    #   set_current()       - Input => {0.5, 1.0, 1.5, 2.0, 2.5, 2.8, 3.0, 3.2, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0}
+    #   set_microstep()     - Input => {1, 2, 4, 8, 16}. These value correspond to {1, 1/2, 1/4, 1/8, 1/16} microstep
+    #   set_acceleration()  - Input = newAcceleration (15 - 59590)
+    #   set_deceleration()  - Input = newDeceleration (15 - 59590)
+    #   set_pitch()         - Input = newPitch (0.5 - 100)
     #
-    #   connect()           -
-    #   disconnect()        -
+    #   connect()           - Connect the motor driver to the bus
+    #   disconnect()        - Disconnect the motor driver from the bus
     #   
-    #   set_home()          -
+    #   set_home()          - Set current position of motor as home_position
     #   start_movement()    -
     #   stop_movement()     -
     #   hold()              -
     #   release()           -
     #
-    #   show_last_command() -
-    #   show_details()      -
+    #   show_last_command() - Print (to console) the last command sent to the motor driver
+    #   show_details()      - Print (to console) the values of different parameters currently set for the motor driver
     #
-    # Constructor:
+    # Constructor:  Initializes a motor driver with user-given or default values
     #
     # Private Functions:-
-    #   getUnitOfSpeedCode()    -
-    #   getDirectionCode()      -
+    #   getUnitOfSpeedCode()    - returns the hex code of the given unit of speed.
+    #   getDirectionCode()      - returns the hex code of the given direction.
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def set_slave_addr(self, SlaveAddr):
@@ -231,7 +231,7 @@ class motor:
 
 
     def release(self):
-        self.command = self.set_slave_addr + "0600250008"
+        self.command = self.__slave_addr + "0600250008"
         print("release cmd - ", self.command)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
