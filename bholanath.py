@@ -26,7 +26,7 @@ class motor:
     #   set_acceleration()  -
     #   set_deceleration()  -
     #   set_pitch()         -
-    #   set_speed()         -
+    #
     #   connect()           -
     #   disconnect()        -
     #   
@@ -52,7 +52,7 @@ class motor:
         self.command = self.__slave_addr + "060004" + addr
         print("Slave addr cmd - ", self.command)             # Send command to the device instead of printing
         self.__slave_addr = addr
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_baudrate(self, BaudRate):
@@ -90,7 +90,7 @@ class motor:
         print("baudrate cmd - ", self.command)
 
         self.__baudrate = BaudRate
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_current(self, Current):
@@ -130,7 +130,7 @@ class motor:
         self.command = self.__slave_addr + "060012" + cur
         print("current cmd - ", self.command)
         self.__current = Current
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_microstep(self, Microstep):
@@ -152,7 +152,7 @@ class motor:
         self.command = self.__slave_addr + "06001A" + ms
         print("microstep cmd - ", self.command)          # Send command to the device instead of printing
         self.__microstep = Microstep
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
         
 
     def set_acceleration(self, Accl):
@@ -163,7 +163,7 @@ class motor:
         self.command = self.__slave_addr + "06000C" + acc
         print("acceleration cmd - ", self.command)
         self.__acceleration = Accl
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_deceleration(self, Decel):
@@ -174,7 +174,7 @@ class motor:
         self.command = self.__slave_addr + "06000D" + dec
         print("deceleration cmd - ", self.command)
         self.__deceleration = Decel
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_pitch(self, Pitch):
@@ -185,13 +185,7 @@ class motor:
         self.command = self.__slave_addr + "060022" + pi
         print("pitch cmd - ", self.command)
         self.__pitch = Pitch
-    #__________________________________________________________________________________________________________________
-
-
-    def set_speed(self, Speed, UnitOfSpeed):
-        self.__speed = Speed
-        self.__unit_of_speed = UnitOfSpeed
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def connect(self):
@@ -201,7 +195,7 @@ class motor:
             self.__status = "Connected"
         else:
             print("Device is already connected")
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def disconnect(self):
@@ -211,7 +205,7 @@ class motor:
             self.__status = "Not Connected"
         else:
             print("Device is already disconnected")
-    #__________________________________________________________________________________________________________________
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_home(self):
@@ -251,6 +245,8 @@ class motor:
 
         self.command = self.__slave_addr + "10002500030601" + dir + uSpd + spd
         print("run cmd - ", self.command)
+        self.__speed = Speed
+        self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -288,6 +284,8 @@ class motor:
 
         self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
         print("move cmd - ", self.command)
+        self.__speed = Speed
+        self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -299,6 +297,8 @@ class motor:
 
         self.command = self.__slave_addr + "10002500030603" + uSpd + spd
         print("go home cmd - ", self.command)
+        self.__speed = Speed
+        self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -315,7 +315,8 @@ class motor:
         self.set_acceleration(Accl)
         self.set_deceleration(Decel)
         self.set_pitch(Pitch)
-        self.set_speed(Speed, UnitOfSpeed)
+        self.__speed = Speed
+        self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
