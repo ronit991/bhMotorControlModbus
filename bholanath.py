@@ -287,7 +287,7 @@ class motor:
         sat = sat[2:]                   # Discard 0x prefix from hex string
 
         self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
-        pass
+        print("move cmd - ", self.command)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
