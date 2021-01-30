@@ -290,6 +290,7 @@ class motor:
         spd = spd[2:]                   # Discard the 0x prefix from the hex string
 
         self.command = self.__slave_addr + "10002500030603" + uSpd + spd
+        print("go home cmd - ", self.command)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
