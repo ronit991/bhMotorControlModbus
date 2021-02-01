@@ -1,3 +1,6 @@
+#——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+#                                           Motor (class) definition
+# <description here>
 class motor:
     # Private data members
     __id = None                 # Id number (for reference only)
@@ -44,6 +47,7 @@ class motor:
     # Private Functions:-
     #   getUnitOfSpeedCode()    - returns the hex code of the given unit of speed.
     #   getDirectionCode()      - returns the hex code of the given direction.
+    #   send()                  - converts the command string into numeric form and sends it to the motor driver
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def set_slave_addr(self, SlaveAddr):
@@ -275,15 +279,16 @@ class motor:
         elif( ( Type == "Rotary_CW_Steps" ) or ( Type == "rotary_cw_steps" ) ):
             mType = "07"
 
-        if( (mType == "03") or (mType == "03") ):   # If movement type is angle, multiply it by 100
-            SAT = 100                               # This is specified in the datasheet of the motor driver.
+        if( (mType == "02") or (mType == "03") ):   # If movement type is angle, multiply it by 100
+            SAT *= 100                              # This is specified in the datasheet of the motor driver.
 
         sat = int(SAT)                  # Round off Step/Angle/Time value to an integer
-        sat = format(sat, '#10X')       # Convert int value to hex string
+        sat = format(sat, '#010X')      # Convert int value to hex string
         sat = sat[2:]                   # Discard 0x prefix from hex string
 
         self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
         print("move cmd - ", self.command)
+        self.__send()
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -333,11 +338,36 @@ class motor:
         print("\t Speed - ", self.__speed, self.__unit_of_speed)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
+
     def show_last_command(self):
         print("Last sent command for motor #{mID} - {cmd}".format(mID = self.__id, cmd = self.command))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
+    #——————————————————————————————————————————————— PRIVATE FUNCTIONS ————————————————————————————————————————————————
+
+    # send()    - converts the command string into binary equivalents
+    def __send(self):
+        cmdAscii = [ord(cmdByte) for cmdByte in self.command]
+        cmdNumeric = []
+
+        for cmdByte in cmdAscii:
+            if( (cmdByte >= 48) and (cmdByte <= 58)):       # this means the current character in the string is a number from 0 to 9
+                cmdNumeric.append( (cmdByte - 48) )         # subtract ascii value of '0' from the current char to get its numerical value
+            elif( (cmdByte >= 65) and (cmdByte <= 70) ):    # this means the current character is between 'A' to 'F'
+                cmdNumeric.append( (cmdByte - 65) + 10 )    # subtract ascii value of 'A' and add 10 to get its numerical value
+            else:
+                print("illegal command character ({1}) found... \n aborting program".format(cmdByte))
+                quit()
+
+        actualCmd = []
+        for i in cmdNumeric:
+            actualCmd.append( chr(i) )
+        #str1 = ""
+        #actualCmd = str1.join(actualCmdCharacters)
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    
+    
     def __getUnitCode(self, UnitOfSpeed):
         uSpd = ""
         if( (UnitOfSpeed == "RPM") or (UnitOfSpeed == "rpm") ):
@@ -365,3 +395,21 @@ class motor:
         
         return dir
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+#_end_of_motor_class_________________________________________________________________________________end_of_motor_class
+
+
+
+import serial
+ser = None
+
+def serialInit(Port, BaudRate = 115200, Timeout = None):
+    global ser
+    ser = serial.Serial(Port, BaudRate, timeout=Timeout)
+
+
+
+def serialSend(mbCommand):
+    for i in mbCommand:
+        ser.write(i)
+
