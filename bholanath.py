@@ -1,3 +1,4 @@
+from time import sleep
 #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 #                                           Motor (class) definition
 # <description here>
@@ -6,7 +7,7 @@ class motor:
     __id = None                 # Id number (for reference only)
     __status = "Not Connected"  # Connection Status
     __slave_addr = "01"         # The drivers have default slave address of 0x01
-    __baudrate = None
+    __baudrate = 19200
 
     __current = None            # Current in Ampere
     __microstep = None          # Full, Half, 1/4, 1/8, or 1/16
@@ -22,6 +23,9 @@ class motor:
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     #                                           Member Function Definitions
     # Public Functions:-
+    #   connect()           - Connect the motor driver to the bus
+    #   disconnect()        - Disconnect the motor driver from the bus
+    #   
     #   set_slave_addr()    - Input = newSlaveAddr (1-247).
     #   set_baudrate()      - Input => {1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 72000, 115200, 128000}
     #   set_current()       - Input => {0.5, 1.0, 1.5, 2.0, 2.5, 2.8, 3.0, 3.2, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0}
@@ -30,9 +34,6 @@ class motor:
     #   set_deceleration()  - Input = newDeceleration (15 - 59590)
     #   set_pitch()         - Input = newPitch (0.5 - 100)
     #
-    #   connect()           - Connect the motor driver to the bus
-    #   disconnect()        - Disconnect the motor driver from the bus
-    #   
     #   set_home()          - Set current position of motor as home_position
     #   start_movement()    -
     #   stop_movement()     -
@@ -50,11 +51,59 @@ class motor:
     #   send()                  - converts the command string into numeric form and sends it to the motor driver
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
+
+    # Class Constructor - Sets values of motor parameters when a motor object is created
+    # Slave Address is mandatory, while others are optional.
+    # If optional parameters are not given, they use the default values specified in the next line.
+    def __init__(self, ID, SlaveAddr, BaudRate = 115200, Current = 1, Microstep = 1, Accl = 200, Decel = 200, Pitch = 50, Speed = 200, UnitOfSpeed = "RPM"):
+        self.__id = ID
+        self.connect()
+        #self.set_slave_addr(SlaveAddr)
+        self.set_baudrate(BaudRate)
+        self.set_current(Current)
+        self.set_microstep(Microstep)
+        self.set_acceleration(Accl)
+        self.set_deceleration(Decel)
+        #self.set_pitch(Pitch)
+        self.__speed = Speed
+        self.__unit_of_speed = UnitOfSpeed
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+    def connect(self):
+        if(self.__status == "Not Connected"):
+            self.command = self.__slave_addr + "0600000001"  # connect command - <slave_address> 06 00 00 0001
+            print("Connect cmd - ", self.command)
+            self.__send()
+            #resp = ser.read(6)
+            #print("Connect response", resp)
+            self.__status = "Connected"
+        else:
+            print("Device is already connected")
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+    def disconnect(self):
+        if(self.__status == "Connected"):
+            self.command = self.__slave_addr + "0600000000"  # connect command - <slave_address> 06 00 00 0001
+            print("Disconnect cmd - ", self.command)
+            self.__send()
+            #resp = ser.read(6)
+            #print("Disconnect response", resp)
+            self.__status = "Not Connected"
+        else:
+            print("Device is already disconnected")
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
     def set_slave_addr(self, SlaveAddr):
-        addr = format(SlaveAddr, '#04X')    # convert baudrate to hex string
+        addr = format(SlaveAddr, '#04X')    # convert int value to hex string
         addr = addr[2:]                     # discard the 0x prefix from the hex string
         self.command = self.__slave_addr + "060004" + addr
         print("Slave addr cmd - ", self.command)             # Send command to the device instead of printing
+        self.__send()
+        #resp = ser.read(6)
+        #print("Slave addr response", resp)
         self.__slave_addr = addr
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -92,6 +141,9 @@ class motor:
 
         self.command = self.__slave_addr + "060001" + br
         print("baudrate cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Baudrate response", resp)
 
         self.__baudrate = BaudRate
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -133,6 +185,9 @@ class motor:
 
         self.command = self.__slave_addr + "060012" + cur
         print("current cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Current response", resp)
         self.__current = Current
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -155,6 +210,9 @@ class motor:
 
         self.command = self.__slave_addr + "06001A" + ms
         print("microstep cmd - ", self.command)          # Send command to the device instead of printing
+        self.__send()
+        #resp = ser.read(6)
+        #print("Microstep response", resp)
         self.__microstep = Microstep
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
         
@@ -166,6 +224,9 @@ class motor:
 
         self.command = self.__slave_addr + "06000C" + acc
         print("acceleration cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Accl response", resp)
         self.__acceleration = Accl
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -177,6 +238,9 @@ class motor:
 
         self.command = self.__slave_addr + "06000D" + dec
         print("deceleration cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Decel response", resp)
         self.__deceleration = Decel
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -188,55 +252,53 @@ class motor:
 
         self.command = self.__slave_addr + "060022" + pi
         print("pitch cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Pitch response", resp)
         self.__pitch = Pitch
-    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
-
-
-    def connect(self):
-        if(self.__status == "Not Connected"):
-            self.command = self.__slave_addr + "0600000001"  # connect command - <slave_address> 06 00 00 0001
-            print("Connect cmd - ", self.command)
-            self.__status = "Connected"
-        else:
-            print("Device is already connected")
-    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
-
-
-    def disconnect(self):
-        if(self.__status == "Connected"):
-            self.command = self.__slave_addr + "0600000000"  # connect command - <slave_address> 06 00 00 0001
-            print("Disconnect cmd - ", self.command)
-            self.__status = "Not Connected"
-        else:
-            print("Device is already disconnected")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def set_home(self):
         self.command = self.__slave_addr + "0600250004"
         print("set home position cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Set Home response", resp)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def start_movement(self):
         self.command = self.__slave_addr + "0600250005"
         print("start movement cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Start movement response", resp)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def stop_movement(self):
         self.command = self.__slave_addr + "0600250006"
         print("stop movement cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Stop movement response", resp)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def hold(self):
         self.command = self.__slave_addr + "0600250007"
         print("hold cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Hold response", resp)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def release(self):
         self.command = self.__slave_addr + "0600250008"
         print("release cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Release response", resp)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -249,6 +311,9 @@ class motor:
 
         self.command = self.__slave_addr + "10002500030601" + dir + uSpd + spd
         print("run cmd - ", self.command)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Run response", resp)
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -289,6 +354,8 @@ class motor:
         self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
         print("move cmd - ", self.command)
         self.__send()
+        #resp = ser.read(6)
+        #print("Move response", resp)
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -302,24 +369,9 @@ class motor:
 
         self.command = self.__slave_addr + "10002500030603" + uSpd + spd
         print("go home cmd - ", self.command)
-        self.__speed = Speed
-        self.__unit_of_speed = UnitOfSpeed
-    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
-
-
-    # Class Constructor - Sets values of motor parameters when a motor object is created
-    # Slave Address is mandatory, while others are optional.
-    # If optional parameters are not given, they use the default values specified in the next line.
-    def __init__(self, ID, SlaveAddr, BaudRate = 115200, Current = 1, Microstep = 1, Accl = 200, Decel = 200, Pitch = 50, Speed = 200, UnitOfSpeed = "RPM"):
-        self.__id = ID
-        self.connect()
-        self.set_slave_addr(SlaveAddr)
-        self.set_baudrate(BaudRate)
-        self.set_current(Current)
-        self.set_microstep(Microstep)
-        self.set_acceleration(Accl)
-        self.set_deceleration(Decel)
-        self.set_pitch(Pitch)
+        self.__send()
+        #resp = ser.read(6)
+        #print("Go Home response", resp)
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -348,23 +400,26 @@ class motor:
 
     # send()    - converts the command string into binary equivalents
     def __send(self):
-        cmdAscii = [ord(cmdByte) for cmdByte in self.command]
-        cmdNumeric = []
+        # cmdAscii = [ord(cmdByte) for cmdByte in self.command]
+        # cmdNumeric = []
 
-        for cmdByte in cmdAscii:
-            if( (cmdByte >= 48) and (cmdByte <= 58)):       # this means the current character in the string is a number from 0 to 9
-                cmdNumeric.append( (cmdByte - 48) )         # subtract ascii value of '0' from the current char to get its numerical value
-            elif( (cmdByte >= 65) and (cmdByte <= 70) ):    # this means the current character is between 'A' to 'F'
-                cmdNumeric.append( (cmdByte - 65) + 10 )    # subtract ascii value of 'A' and add 10 to get its numerical value
-            else:
-                print("illegal command character ({1}) found... \n aborting program".format(cmdByte))
-                quit()
+        # for cmdByte in cmdAscii:
+        #     if( (cmdByte >= 48) and (cmdByte <= 58)):       # this means the current character in the string is a number from 0 to 9
+        #         cmdNumeric.append( (cmdByte - 48) )         # subtract ascii value of '0' from the current char to get its numerical value
+        #     elif( (cmdByte >= 65) and (cmdByte <= 70) ):    # this means the current character is between 'A' to 'F'
+        #         cmdNumeric.append( (cmdByte - 65) + 10 )    # subtract ascii value of 'A' and add 10 to get its numerical value
+        #     else:
+        #         print("illegal command character ({1}) found... \n aborting program".format(cmdByte))
+        #         quit()
 
-        actualCmd = []
-        for i in cmdNumeric:
-            actualCmd.append( chr(i) )
-        #str1 = ""
-        #actualCmd = str1.join(actualCmdCharacters)
+        # actualCmdC = []
+        # for i in cmdNumeric:
+        #     actualCmdC.append( chr(i) )
+        # str1 = ""
+        # actualCmd = str1.join(actualCmdC)
+        # ser.write(actualCmd.encode())
+        ser.write(self.command.encode())
+        sleep(1)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
     
@@ -403,9 +458,9 @@ class motor:
 import serial
 ser = None
 
-def serialInit(Port, BaudRate = 115200, Timeout = None):
+def serialInit(Port, BaudRate = 115200):
     global ser
-    ser = serial.Serial(Port, BaudRate, timeout=Timeout)
+    ser = serial.Serial(Port, BaudRate)
 
 
 
