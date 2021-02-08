@@ -11,7 +11,7 @@ class motor:
     __slave_addr = "04"         # The drivers have default slave address of 0x01
     __baudrate = 19200
 
-    __motor_current_limit = 0
+    __device_type = ""
     __current = None            # Current in Ampere
     __microstep = None          # Full, Half, 1/4, 1/8, or 1/16
     __acceleration = None       # Acceleration & Deceleration in step/sec^2.
@@ -79,14 +79,34 @@ class motor:
             print("Connect - ", end="")
             self.__send()
             print("Waiting for response...")
-            resp = ser.read(6)
+            resp = ser.read(8)
             print("Connect response", resp)
+            self.readCurrentLimit()
             self.__status = "Connected"
         else:
             print("Device is already connected")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
+    def readCurrentLimit(self):
+        self.command = self.__slave_addr + "0300000001"
+        self.__send()
+        resp = (binascii.hexlify( ser.read(7) ) ).decode('ascii')
+        print("ReadDeviceType response (hexlify) - ", resp)
+        dtype = resp[8:10]
+        print("device type - ", dtype)
+        if(dtype == "01"):
+            print("Device found: Stepper Drive - 2 A")
+            self.__device_type = "01"
+        elif(dtype == "02"):
+            print("Device found: Stepper Drive - 4.5 A")
+            self.__device_type = "02"
+        elif(dtype == "03"):
+            print("Device found: Stepper Drive - 6 A")
+            self.__device_type = "03"
+        #resp = resp[]
+        pass
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     def disconnect(self):
         if(self.__status == "Connected"):
             self.command = self.__slave_addr + "0600000000"  # connect command - <slave_address> 06 00 00 0001
@@ -155,37 +175,68 @@ class motor:
 
     def set_current(self, Current):
         cur = "0000"
-        if( Current == 0.5):
-            cur = "0006"
-        elif( Current == 1.0):
-            cur = "000C"
-        elif( Current == 1.5):
-            cur = "0013"
-        elif( Current == 2.0):
-            cur = "0019"
-        elif( Current == 2.5):
-            cur = "0020"
-        elif( Current == 2.8):
-            cur = "0023"
-        elif( Current == 3.0):
-            cur = "0026"
-        elif( Current == 3.2):
-            cur = "0029"
-        elif( Current == 3.5):
-            cur = "002C"
-        elif( Current == 4.0):
-            cur = "0033"
-        elif( Current == 4.5):
-            cur = "0039"
-        elif( Current == 5.0):
-            cur = "0040"
-        elif( Current == 5.5):
-            cur = "0046"
-        elif( Current == 6.0):
-            cur = "004C"
-        else:
-            print("Invalid input (", Current, ") for current value")
-            return None
+        if(self.__device_type == "01"): # 01 is the code for 2 A Stepper Drive
+            if( Current == 0.25 ):
+                cur = "0007"
+            elif( Current == 0.4 ):
+                cur = "000C"
+            elif( Current == 0.5 ):
+                cur = "000F"
+            elif( Current == 0.6 ):
+                cur = "0013"
+            elif( Current == 0.75 ):
+                cur = "0017"
+            elif( Current == 0.85 ):
+                cur = "001B"
+            elif( Current == 1.0 ):
+                cur = "001F"
+            elif( Current == 1.2 ):
+                cur = "0026"
+            elif( Current == 1.33 ):
+                cur = "002A"
+            elif( Current == 1.5 ):
+                cur = "002F"
+            elif( Current == 1.7 ):
+                cur = "0036"
+            elif( Current == 1.8 ):
+                cur = "0039"
+            elif( Current == 2.0 ):
+                cur = "003F"
+            else:
+                print("Invalid input (", Current, ") for current value of 2 A Stepper Drive")
+                return None
+        elif( (self.__device_type == "02") or (self.__device_type == "03") ): # 02 & 03 is the code for 4.5 A & 6 A Stepper Drive respectively
+            if( Current == 0.5):
+                cur = "0006"
+            elif( Current == 1.0):
+                cur = "000C"
+            elif( Current == 1.5):
+                cur = "0013"
+            elif( Current == 2.0):
+                cur = "0019"
+            elif( Current == 2.5):
+                cur = "0020"
+            elif( Current == 2.8):
+                cur = "0023"
+            elif( Current == 3.0):
+                cur = "0026"
+            elif( Current == 3.2):
+                cur = "0029"
+            elif( Current == 3.5):
+                cur = "002C"
+            elif( Current == 4.0):
+                cur = "0033"
+            elif( Current == 4.5):
+                cur = "0039"
+            elif( Current == 5.0):
+                cur = "0040"
+            elif( Current == 5.5):
+                cur = "0046"
+            elif( Current == 6.0):
+                cur = "004C"
+            else:
+                print("Invalid input (", Current, ") for current value of 4.5/6 A Stepper Drive")
+                return None
 
         self.command = self.__slave_addr + "060012" + cur
         print("set current - ", end="")
@@ -216,7 +267,7 @@ class motor:
         print("microstep - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Microstep response", resp)
+        print("Microstep response", binascii.hexlify(resp))
         self.__microstep = Microstep
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
         
@@ -230,7 +281,7 @@ class motor:
         print("acceleration - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Accl response", resp)
+        print("Accl response", binascii.hexlify(resp))
         self.__acceleration = Accl
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -244,7 +295,7 @@ class motor:
         print("deceleration - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Decel response", resp)
+        print("Decel response", binascii.hexlify(resp))
         self.__deceleration = Decel
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -258,7 +309,7 @@ class motor:
         print("pitch - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Pitch response", resp)
+        print("Pitch response", binascii.hexlify(resp))
         self.__pitch = Pitch
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -268,7 +319,7 @@ class motor:
         print("set home position - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Set Home response", resp)
+        print("Set Home response", binascii.hexlify(resp))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def start_movement(self):
@@ -276,7 +327,7 @@ class motor:
         print("start movement - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Start movement response", resp)
+        print("Start movement response", binascii.hexlify(resp))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def stop_movement(self):
@@ -284,7 +335,7 @@ class motor:
         print("stop movement - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Stop movement response", resp)
+        print("Stop movement response", binascii.hexlify(resp))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -293,7 +344,7 @@ class motor:
         print("hold - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Hold response", resp)
+        print("Hold response", binascii.hexlify(resp))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -302,7 +353,7 @@ class motor:
         print("release - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Release response", resp)
+        print("Release response", binascii.hexlify(resp))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -317,7 +368,7 @@ class motor:
         print("run - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Run response", resp)
+        print("Run response", binascii.hexlify(resp))
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -359,7 +410,7 @@ class motor:
         print("move - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Move response", resp)
+        print("Move response", binascii.hexlify(resp))
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -375,14 +426,14 @@ class motor:
         print("go home - ", end="")
         self.__send()
         resp = ser.read(6)
-        print("Go Home response", resp)
+        print("Go Home response", binascii.hexlify(resp))
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
     def show_details(self):
-        print("\n Details for Motor #{mID}:".format(mID = self.__id))
+        print("\n Details for \"{mID}\":".format(mID = self.__id))
         print("\t Status - ", self.__status)
         print("\t Slave Address - ", self.__slave_addr)
         print("\t Baud rate - ", self.__baudrate)
