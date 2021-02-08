@@ -1,0 +1,28 @@
+Three popular versions of Modbus:
+1. MODBUS RTU
+2. MODBUS ASCII
+3. MODBUS/TCP
+
+What is the difference between Modbus ASCII and Modbus RTU? 
+Modbus RTU and Modbus ASCII talks the same protocol. The only difference is that the bytes being transmitted over the 
+wire are presented as binary with RTU and as readable ASCII with Modbus RTU. Modbus RTU will be used in this tutorial.
+
+_______________________________________________________________________________________________________________________________________
+
+Waveform study of Bholanath Software
+--------------------------------------
+When we connect the Driver by the Slider, following commands are sent and received:
+
+1. REQUEST: Connect command is sent.
+    DeviceID: '1'(0x01), Func: Write Single Register: '6'(0x06), Addr: '0'(0x00), Value: '1'(0x01)
+
+2. RESPONSE: Same command is received.
+    DeviceID: '1'(0x01), Func: Write Single Register: '6'(0x06), Addr: '0'(0x00), Value: '1'(0x01)
+
+3. REQUEST: Read command for Device Name. (0x01: LC Drive 2A, 0x02: LC Drive 4.5A, 0x03: LC Drive 6A)
+    DeviceID: '1'(0x01), Func: Holding Register: '3'(0x03), StartAddr: '0'(0x00), Qty: '1'(0x01)
+
+4. RESPONSE: Hex code for Device Name is received.
+    DeviceID: '1'(0x01), Func: Holding Register: '3'(0x03), Qty: '2'(0x02), Value: '2'(0x0002)
+
+And so on.

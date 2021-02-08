@@ -79,8 +79,8 @@ class motor:
             print("Connect - ", end="")
             self.__send()
             print("Waiting for response...")
-            resp = ser.read(6)
-            print("Connect response", resp)
+            resp = ser.read(8)
+            print("Connect response", binascii.hexlify(resp))
             self.__status = "Connected"
         else:
             print("Device is already connected")
