@@ -8,9 +8,10 @@ class motor:
     # Private data members
     __id = None                 # Id number (for reference only)
     __status = "Not Connected"  # Connection Status
-    __slave_addr = "01"         # The drivers have default slave address of 0x01
+    __slave_addr = "04"         # The drivers have default slave address of 0x01
     __baudrate = 19200
 
+    __motor_current_limit = 0
     __current = None            # Current in Ampere
     __microstep = None          # Full, Half, 1/4, 1/8, or 1/16
     __acceleration = None       # Acceleration & Deceleration in step/sec^2.
@@ -59,8 +60,8 @@ class motor:
     # If optional parameters are not given, they use the default values specified in the next line.
     def __init__(self, ID, SlaveAddr, BaudRate = 19200, Current = 1, Microstep = 1, Accl = 1, Decel = 1, Pitch = 50, Speed = 200, UnitOfSpeed = "RPM"):
         self.__id = ID
+        self.__slave_addr = format(SlaveAddr, '#04X')[2:]
         self.connect()
-        self.set_slave_addr(SlaveAddr)
         self.set_baudrate(BaudRate)
         self.set_current(Current)
         self.set_microstep(Microstep)
@@ -100,14 +101,14 @@ class motor:
 
 
     def set_slave_addr(self, SlaveAddr):
-        addr = format(SlaveAddr, '#04X')    # convert int value to hex string
+        addr = format(SlaveAddr, '#06X')    # convert int value to hex string
         addr = addr[2:]                     # discard the 0x prefix from the hex string
         self.command = self.__slave_addr + "060004" + addr
         print("Set Slave addr - ", end="")
         self.__send()
         resp = ser.read(6)
         print("Slave addr response", resp)
-        self.__slave_addr = addr
+        self.__slave_addr = addr[2:]
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -415,9 +416,10 @@ class motor:
         invertedCrc = mCrcLo + mCrcHi
         actualCmd = self.command + invertedCrc
 
-        print("Sending Command: ", actualCmd)
+        print("Sending Command: ", actualCmd, end="")
         #ser.write(binascii.unhexlify(self.command))
         ser.write(binascii.unhexlify(actualCmd))
+        print("... Sent.")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
     

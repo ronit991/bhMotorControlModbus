@@ -2,8 +2,8 @@ import bholanath as bh
 from os import system
 from time import sleep
 
-pan = bh.motor("pan motor", 20, 115200, 4.0)
-tilt = bh.motor("tilt motor", 21, 115200, 4.0)
+pan = bh.motor("pan motor", 20, 19200, 3.0)
+tilt = bh.motor("tilt motor", 21, 19200, 3.0)
 
 #bh.serialInit('COM10', 115200)
 
