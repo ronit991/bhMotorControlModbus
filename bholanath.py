@@ -1,4 +1,5 @@
 from time import sleep
+import binascii
 #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 #                                           Motor (class) definition
 # <description here>
@@ -58,7 +59,7 @@ class motor:
     def __init__(self, ID, SlaveAddr, BaudRate = 115200, Current = 1, Microstep = 1, Accl = 200, Decel = 200, Pitch = 50, Speed = 200, UnitOfSpeed = "RPM"):
         self.__id = ID
         self.connect()
-        #self.set_slave_addr(SlaveAddr)
+        self.set_slave_addr(SlaveAddr)
         self.set_baudrate(BaudRate)
         self.set_current(Current)
         self.set_microstep(Microstep)
@@ -73,10 +74,11 @@ class motor:
     def connect(self):
         if(self.__status == "Not Connected"):
             self.command = self.__slave_addr + "0600000001"  # connect command - <slave_address> 06 00 00 0001
-            print("Connect cmd - ", self.command)
+            print("Connect - ", end="")
             self.__send()
-            #resp = ser.read(6)
-            #print("Connect response", resp)
+            print("Waiting for response...")
+            resp = ser.read(6)
+            print("Connect response", resp)
             self.__status = "Connected"
         else:
             print("Device is already connected")
@@ -86,7 +88,7 @@ class motor:
     def disconnect(self):
         if(self.__status == "Connected"):
             self.command = self.__slave_addr + "0600000000"  # connect command - <slave_address> 06 00 00 0001
-            print("Disconnect cmd - ", self.command)
+            print("Disconnect - ", end="")
             self.__send()
             #resp = ser.read(6)
             #print("Disconnect response", resp)
@@ -100,7 +102,7 @@ class motor:
         addr = format(SlaveAddr, '#04X')    # convert int value to hex string
         addr = addr[2:]                     # discard the 0x prefix from the hex string
         self.command = self.__slave_addr + "060004" + addr
-        print("Slave addr cmd - ", self.command)             # Send command to the device instead of printing
+        print("Set Slave addr - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Slave addr response", resp)
@@ -140,7 +142,7 @@ class motor:
             return None
 
         self.command = self.__slave_addr + "060001" + br
-        print("baudrate cmd - ", self.command)
+        print("set baudrate - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Baudrate response", resp)
@@ -184,7 +186,7 @@ class motor:
             return None
 
         self.command = self.__slave_addr + "060012" + cur
-        print("current cmd - ", self.command)
+        print("set current - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Current response", resp)
@@ -209,7 +211,7 @@ class motor:
             return None
 
         self.command = self.__slave_addr + "06001A" + ms
-        print("microstep cmd - ", self.command)          # Send command to the device instead of printing
+        print("microstep - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Microstep response", resp)
@@ -223,7 +225,7 @@ class motor:
         acc = acc[2:]                   # Discard the 0x prefix from the hex string
 
         self.command = self.__slave_addr + "06000C" + acc
-        print("acceleration cmd - ", self.command)
+        print("acceleration - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Accl response", resp)
@@ -237,7 +239,7 @@ class motor:
         dec = dec[2:]                   # Discard the 0x prefix from the hex string
 
         self.command = self.__slave_addr + "06000D" + dec
-        print("deceleration cmd - ", self.command)
+        print("deceleration - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Decel response", resp)
@@ -251,7 +253,7 @@ class motor:
         pi = pi[2:]                 # Discard the 0x prefix from the hex string
 
         self.command = self.__slave_addr + "060022" + pi
-        print("pitch cmd - ", self.command)
+        print("pitch - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Pitch response", resp)
@@ -261,7 +263,7 @@ class motor:
 
     def set_home(self):
         self.command = self.__slave_addr + "0600250004"
-        print("set home position cmd - ", self.command)
+        print("set home position - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Set Home response", resp)
@@ -269,7 +271,7 @@ class motor:
 
     def start_movement(self):
         self.command = self.__slave_addr + "0600250005"
-        print("start movement cmd - ", self.command)
+        print("start movement - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Start movement response", resp)
@@ -277,7 +279,7 @@ class motor:
 
     def stop_movement(self):
         self.command = self.__slave_addr + "0600250006"
-        print("stop movement cmd - ", self.command)
+        print("stop movement - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Stop movement response", resp)
@@ -286,7 +288,7 @@ class motor:
 
     def hold(self):
         self.command = self.__slave_addr + "0600250007"
-        print("hold cmd - ", self.command)
+        print("hold - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Hold response", resp)
@@ -295,7 +297,7 @@ class motor:
 
     def release(self):
         self.command = self.__slave_addr + "0600250008"
-        print("release cmd - ", self.command)
+        print("release - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Release response", resp)
@@ -310,7 +312,7 @@ class motor:
         spd = spd[2:]                   # Discard the 0x prefix from the hex string
 
         self.command = self.__slave_addr + "10002500030601" + dir + uSpd + spd
-        print("run cmd - ", self.command)
+        print("run - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Run response", resp)
@@ -352,7 +354,7 @@ class motor:
         sat = sat[2:]                   # Discard 0x prefix from hex string
 
         self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
-        print("move cmd - ", self.command)
+        print("move - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Move response", resp)
@@ -368,7 +370,7 @@ class motor:
         spd = spd[2:]                   # Discard the 0x prefix from the hex string
 
         self.command = self.__slave_addr + "10002500030603" + uSpd + spd
-        print("go home cmd - ", self.command)
+        print("go home - ", end="")
         self.__send()
         #resp = ser.read(6)
         #print("Go Home response", resp)
@@ -400,26 +402,20 @@ class motor:
 
     # send()    - converts the command string into binary equivalents
     def __send(self):
-        # cmdAscii = [ord(cmdByte) for cmdByte in self.command]
-        # cmdNumeric = []
+        CmdHex = binascii.unhexlify(self.command)
+        
+        mCrc = crc.modbus(CmdHex)
+        mCrcHex = format(mCrc, '#06X')[2:]
+        
+        mCrcLo = mCrcHex[2:]
+        mCrcHi = mCrcHex[:2]
+        
+        invertedCrc = mCrcLo + mCrcHi
+        actualCmd = self.command + invertedCrc
 
-        # for cmdByte in cmdAscii:
-        #     if( (cmdByte >= 48) and (cmdByte <= 58)):       # this means the current character in the string is a number from 0 to 9
-        #         cmdNumeric.append( (cmdByte - 48) )         # subtract ascii value of '0' from the current char to get its numerical value
-        #     elif( (cmdByte >= 65) and (cmdByte <= 70) ):    # this means the current character is between 'A' to 'F'
-        #         cmdNumeric.append( (cmdByte - 65) + 10 )    # subtract ascii value of 'A' and add 10 to get its numerical value
-        #     else:
-        #         print("illegal command character ({1}) found... \n aborting program".format(cmdByte))
-        #         quit()
-
-        # actualCmdC = []
-        # for i in cmdNumeric:
-        #     actualCmdC.append( chr(i) )
-        # str1 = ""
-        # actualCmd = str1.join(actualCmdC)
-        # ser.write(actualCmd.encode())
-        ser.write(self.command.encode())
-        sleep(0.5)
+        print("Sending Command: ", actualCmd)
+        #ser.write(binascii.unhexlify(self.command))
+        ser.write(binascii.unhexlify(actualCmd))
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
     

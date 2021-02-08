@@ -1,4 +1,5 @@
 import bholanath as bh
+
 bh.serialInit('COM13', 19200)
 
 pan = bh.motor("pan motor", 1, 19200, 1.5)
