@@ -419,7 +419,7 @@ class motor:
         # actualCmd = str1.join(actualCmdC)
         # ser.write(actualCmd.encode())
         ser.write(self.command.encode())
-        sleep(1)
+        sleep(0.5)
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
     

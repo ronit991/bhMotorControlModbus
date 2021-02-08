@@ -1,11 +1,36 @@
 import bholanath as bh
+from os import system
+from time import sleep
 
-m2 = bh.motor(2, 56, 115200)
+pan = bh.motor("pan motor", 20, 115200, 4.0)
+tilt = bh.motor("tilt motor", 21, 115200, 4.0)
 
-m2.go_home(2000, "rpm")
-m2.start_movement()
-m2.hold()
-m2.release()
-m2.stop_movement()
+#bh.serialInit('COM10', 115200)
 
-m2.run("CW", 2000, "RPH")
+while(1):
+    system('cls')
+    print("Choose Option: \n  1. Pan\n  2. Tilt\n  3. Exit\n > ", end="")
+    ch = input()
+
+    if(ch == '1'):
+        angle = float(input("Enter pan angle (in degrees): "))
+        spd = int(input("Enter speed in rpm: "))
+        dir = input("Enter direction (cw/ccw): ")
+        if(dir == "cw"):
+            pan.move(spd, "rpm", "Rotary_CW_Angle", angle)
+        else:
+            pan.move(spd, "rpm", "Rotary_CCW_Angle", angle)
+    elif(ch == '2'):
+        angle = float(input("Enter tilt angle (in degrees): "))
+        spd = int(input("Enter speed in rpm: "))
+        dir = input("Enter direction (cw/ccw): ")
+        if(dir == "cw"):
+            tilt.move(spd, "rpm", "Rotary_CW_Angle", angle)
+        else:
+            tilt.move(spd, "rpm", "Rotary_CCW_Angle", angle)
+    elif(ch == '3'):
+        quit()
+    else:
+        print("invalid input")
+
+    input("Press enter to continue... ")
