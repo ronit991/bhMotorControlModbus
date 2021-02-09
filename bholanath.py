@@ -232,7 +232,7 @@ class motor:
         self.__send()
         resp = ser.read(6)
         print("Accl response", resp)
-        self.__acceleration = Accl
+        self.__acceleration = acc
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -246,7 +246,7 @@ class motor:
         self.__send()
         resp = ser.read(6)
         print("Decel response", resp)
-        self.__deceleration = Decel
+        self.__deceleration = dec
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -382,14 +382,52 @@ class motor:
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
-    def fbTilt(self):
-        #cycle 1 - forward tilt 30 degrees  > next cycle = 2
-        #cycle 2 - backward tilt 60 degrees > next cycle = 3
-        #cycle 3 - forward tilt 60 degrees  > next cycle = 2
+    def ForwardBackward(self, Speed, Angle):
+        #cycle 1 - forward (CW) tilt 30 degrees  > next cycle = 2
+        #cycle 2 - backward (CCW) tilt 60 degrees > next cycle = 3
+        #cycle 3 - forward (Cw) tilt 60 degrees  > next cycle = 2
         # so the sequence of cycles is 1 -> 2 -> 3 -> 2-> 3 ->2 -> 3 ...
 
-        #command for cycle 1:
-        self.command = self.__slave_addr + "100025"
+        # Auto Cycle Cmd Format - {Slave Addr 2x} + {Fn Code 10} + {Addr_Cn 4x} + {Qty 0008} + {Byte Count 10}
+        # + {Next Cycle 2x} + {Dir, CycleType, MovementType - 2x} + {Acc 2x} + {Dcc 2x} + {UnitOfSpeed 2x} + {Speed 6x}
+        # + {NoOfSteps 8x} + {StartAt? 2x} + {StopAt? 2x} + {O/P Status at Start 2x} + {O/P Status at Stop 2x}
+        # Kx in the above format means 'K' no. of hex digits
+
+        # Addr for Cycle 'n' is given by Addr_Cn = Addr_C1 + (n-1)*8 where Addr_C1 = 2A
+        
+        spd = format(Speed, '#08X')[2:]
+        print("Speed =", spd)
+        if( Angle <= 90 ):
+            angC1 = int(100*Angle)
+            angC2C3 = int(100*2*Angle)
+            AngleC1Hex = format(angC1, '#010X')[2:]
+            AngleC2C3Hex = format(angC2C3, '#010X')[2:]
+            print("Angle hex =", AngleC1Hex)
+            print("Angle hex =", AngleC2C3Hex)
+        else:
+            print("Invalid angle. Please enter a value bw 0 and 90 degrees")
+            return None
+
+        # Command for cycle 1: (Addr for C1 is 002A)
+        self.command = self.__slave_addr + "10002A000810022C0A0A00" + spd + AngleC1Hex + "00000000"
+        print("Auto Cycle (C1) command :", self.command)
+        self.__send()
+        resp = ser.read(8)
+
+        # Command for cycle 2: (Addr for C2 is 0032)
+        self.command = self.__slave_addr + "10003200081003280A0A00" + spd + AngleC2C3Hex + "00000000"
+        print("Auto Cycle (C2) command :", self.command)
+        self.__send()
+        resp = ser.read(8)
+
+        # Command for cycle 3: (Addr for C3 is 003A)
+        self.command = self.__slave_addr + "10003A000810022C0A0A00" + spd + AngleC2C3Hex + "00000000"
+        print("Auto Cycle (C3) command :", self.command)
+        self.__send()
+        resp = ser.read(8)
+        # self.command = self.__slave_addr + "10003A000810022C0A0A00" + spd + AngleC2C3Hex + "00000000"
+        # print("Auto Cycle (C3) command :", self.command)
+        # self.__send()
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
