@@ -81,25 +81,31 @@ class motor:
     def connect(self):
         if(self.__status == "Not Connected"):
             self.command = self.__slave_addr + "0600000001"  # connect command - <slave_address> 06 00 00 0001
-            print("Connect - ", end="")
+            print("Connecting",self.__slave_addr, end="")
             self.__send()
-            print("Waiting for response...")
-            resp = ser.read(8)
-            print("Connect response", binascii.hexlify(resp))
-            self.readCurrentLimit()
+            resp = readResponse(8)
+            print("\t Response - ", resp)
+
+            if(resp != ( self.__slave_addr + "0600000001") ):
+                print("Invalid response for connect command... reconnecting")
+                self.connect()
+            else:
+                print("Connect OK")
+
+            self.readDeviceType()
             self.__status = "Connected"
         else:
             print("Device is already connected")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
-    def readCurrentLimit(self):
+    def readDeviceType(self):
         self.command = self.__slave_addr + "0300000001"
         self.__send()
-        resp = (binascii.hexlify( ser.read(7) ) ).decode('ascii')
-        print("ReadDeviceType response (hexlify) - ", resp)
+        resp = readResponse(7)
+        print("ReadDeviceType response - ", resp, end=" ")
         dtype = resp[8:10]
-        print("device type - ", dtype)
+        print("=> Device type - ", dtype)
         if(dtype == "01"):
             print("Device found: Stepper Drive - 2 A")
             self.__device_type = "01"
@@ -111,17 +117,24 @@ class motor:
             self.__device_type = "03"
         else:
             print("Read Current Limit - Failed. Retrying...")
-            self.readCurrentLimit()
+            self.readDeviceType()
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
 
     def disconnect(self):
         if(self.__status == "Connected"):
             self.command = self.__slave_addr + "0600000000"  # connect command - <slave_address> 06 00 00 0001
-            print("Disconnect - ", end="")
+            print("Disconnecting ", self.__slave_addr, end="")
             self.__send()
-            resp = ser.read(8)
-            print("Disconnect response", resp)
+            resp = readResponse(8)
+            print("\t Response - ", resp)
+
+            if(resp != ( self.__slave_addr + "0600000000") ):
+                print("Invalid response for connect command... retrying")
+                self.disconnect()
+            else:
+                print("Disconnect OK")
+
             self.__status = "Not Connected"
         else:
             print("Device is already disconnected")
@@ -132,10 +145,17 @@ class motor:
         addr = format(SlaveAddr, '#06X')    # convert int value to hex string
         addr = addr[2:]                     # discard the 0x prefix from the hex string
         self.command = self.__slave_addr + "060004" + addr
-        print("Set Slave addr - ", end="")
+        print("Change Slave addr - ", end="")
         self.__send()
-        resp = ser.read(8)
-        print("Slave addr response", resp)
+        resp = readResponse(8)
+        print("\t Response", resp)
+
+        if(resp != ( self.__slave_addr + "060004" + addr) ):
+                print("Invalid response for change slave address command... retrying")
+                self.set_slave_addr(SlaveAddr)
+            else:
+                print("Change Slave Address OK")
+
         self.__slave_addr = addr[2:]
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -172,11 +192,10 @@ class motor:
             return None
 
         self.command = self.__slave_addr + "060001" + br
-        print("set baudrate - ", end="")
+        print("Set baudrate - ", end="")
         self.__send()
-        resp = ser.read(8)
-        print("Baudrate response", resp)
-
+        # resp = readResponse(8)
+        # print("\t Response", resp)
         self.__baudrate = BaudRate
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -249,8 +268,15 @@ class motor:
         self.command = self.__slave_addr + "060012" + cur
         print("set current - ", end="")
         self.__send()
-        resp = ser.read(6)
+        resp = readResponse(8)
         print("Current response", resp)
+
+        if(resp != ( self.__slave_addr + "060012" + cur) ):
+            print("Invalid response for set current command... retrying")
+            self.set_current(Current)
+        else:
+            print("Set Current OK")
+
         self.__current = Current
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -274,8 +300,15 @@ class motor:
         self.command = self.__slave_addr + "06001A" + ms
         print("microstep - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Microstep response", resp)
+
+        if(resp != ( self.__slave_addr + "06001A" + ms) ):
+            print("Invalid response for microstep command... retrying")
+            self.set_microstep(Microstep)
+        else:
+            print("Set Microstep OK")
+
         self.__microstep = Microstep
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
         
@@ -288,8 +321,15 @@ class motor:
         self.command = self.__slave_addr + "06000C" + acc
         print("acceleration - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Accl response", resp)
+
+        if(resp != ( self.__slave_addr + "06000C" + acc) ):
+            print("Invalid response for set acceleration command... retrying")
+            self.set_acceleration(Accl)
+        else:
+            print("Set Acceleration OK")
+
         self.__acceleration = acc
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -302,8 +342,15 @@ class motor:
         self.command = self.__slave_addr + "06000D" + dec
         print("deceleration - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Decel response", resp)
+
+        if(resp != ( self.__slave_addr + "06000D" + dec) ):
+            print("Invalid response for set deceleration command... retrying")
+            self.set_deceleration(Decel)
+        else:
+            print("Set Deceleration OK")
+
         self.__deceleration = dec
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
@@ -316,7 +363,7 @@ class motor:
         self.command = self.__slave_addr + "060022" + pi
         print("pitch - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Pitch response", resp)
         self.__pitch = Pitch
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -326,24 +373,39 @@ class motor:
         self.command = self.__slave_addr + "0600250004"
         print("set home position - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Set Home response", resp)
+        if(resp != ( self.__slave_addr + "0600250004") ):
+            print("Invalid response for set home command... retrying")
+            self.set_home()
+        else:
+            print("Set Home OK")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def start_movement(self):
         self.command = self.__slave_addr + "0600250005"
         print("start movement - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Start movement response", resp)
+        if(resp != ( self.__slave_addr + "0600250005") ):
+            print("Invalid response for start movement command... retrying")
+            self.start_movement()
+        else:
+            print("Start Movement OK")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
     def stop_movement(self):
         self.command = self.__slave_addr + "0600250006"
         print("stop movement - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Stop movement response", resp)
+        if(resp != ( self.__slave_addr + "0600250006") ):
+            print("Invalid response for stop movement command... retrying")
+            self.stop_movement()
+        else:
+            print("Stop Movement OK")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -351,8 +413,13 @@ class motor:
         self.command = self.__slave_addr + "0600250007"
         print("hold - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Hold response", resp)
+        if(resp != ( self.__slave_addr + "0600250007") ):
+            print("Invalid response for hold command... retrying")
+            self.hold()
+        else:
+            print("Hold OK")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -360,8 +427,13 @@ class motor:
         self.command = self.__slave_addr + "0600250008"
         print("release - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Release response", resp)
+        if(resp != ( self.__slave_addr + "0600250008") ):
+            print("Invalid response for release command... retrying")
+            self.release()
+        else:
+            print("Release OK")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -375,8 +447,14 @@ class motor:
         self.command = self.__slave_addr + "10002500030601" + dir + uSpd + spd
         print("run - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Run response", resp)
+        if(resp != ( self.__slave_addr + "1000250003") ):
+            print("Invalid response for run command... retrying")
+            self.run(Direction, Speed, UnitOfSpeed)
+        else:
+            print("Run OK")
+
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -417,8 +495,15 @@ class motor:
         self.command = self.__slave_addr + "10002500050A02" + mType + uSpd + spd + sat
         print("move - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Move response", resp)
+
+        if(resp != ( self.__slave_addr + "1000250005") ):
+            print("Invalid response for move command... retrying")
+            self.move(Speed, UnitOfSpeed, Type, SAT)
+        else:
+            print("Move OK")
+
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -433,8 +518,15 @@ class motor:
         self.command = self.__slave_addr + "10002500030603" + uSpd + spd
         print("go home - ", end="")
         self.__send()
-        resp = ser.read(8)
+        resp = readResponse(8)
         print("Go Home response", resp)
+        
+        if(resp != ( self.__slave_addr + "1000250003") ):
+            print("Invalid response for go home command... retrying")
+            self.go_home(Speed, UnitOfSpeed)
+        else:
+            print("Go Home OK")
+        
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -470,22 +562,29 @@ class motor:
         self.command = self.__slave_addr + "10002A000810022C0A0A00" + spd + AngleC1Hex + "00000000"
         print("Auto Cycle (C1) command :", self.command)
         self.__send()
-        resp = binascii.hexlify(ser.read(8))
-        print("C1 response - ", resp.decode('ascii'))
+        respC1 = readResponse(8)
+        print("C1 response - ", respC1)
+
 
         # Command for cycle 2: (Addr for C2 is 0032)
         self.command = self.__slave_addr + "10003200081003280A0A00" + spd + AngleC2C3Hex + "00000000"
         print("Auto Cycle (C2) command :", self.command)
         self.__send()
-        resp = ser.read(8)
-        print("C2 response - ", binascii.hexlify(resp))
+        respC2 = readResponse(8)
+        print("C2 response - ", respC2)
 
         # Command for cycle 3: (Addr for C3 is 003A)
         self.command = self.__slave_addr + "10003A000810022C0A0A00" + spd + AngleC2C3Hex + "00000000"
         print("Auto Cycle (C3) command :", self.command)
         self.__send()
-        resp = ser.read(8)
-        print("C1 response - ", binascii.hexlify(resp))
+        respC3 = readResponse(8)
+        print("C3 response - ", respC3)
+
+        if( (respC1 != (self.__slave_addr + "10002A0008")) or (respC2 != (self.__slave_addr + "10002A0008")) or (respC3 != (self.__slave_addr + "10002A0008")) ):
+            print("Invalid response for one of the auto cycle command in forward/backward tilt... retrying")
+            self.ForwardBackward(Speed, Angle)
+        else:
+            print("Forward/Backward Tilt OK")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
@@ -525,10 +624,9 @@ class motor:
         invertedCrc = mCrcLo + mCrcHi
         actualCmd = self.command + invertedCrc
 
-        print("Sending Command: ", actualCmd, end="")
-        #ser.write(binascii.unhexlify(self.command))
+        #print("Sending Command: ", actualCmd, end="")
         ser.write(binascii.unhexlify(actualCmd))
-        print("... Sent.")
+        #print(" ... Sent.")
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     
     
@@ -574,4 +672,7 @@ def serialSend(mbCommand):
 
 
 def readResponse(noOfBytes):
-    resp = ser.read(2*noOfBytes)
+    resp = ser.read(noOfBytes)
+    response = binascii.hexlify(resp)
+    #return response.decode('ascii')    # Use this to get response with checksum
+    return response.decode('ascii')[:-4]     # Use this to get response without checksum
