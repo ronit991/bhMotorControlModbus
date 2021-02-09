@@ -25,6 +25,9 @@ class motor:
 
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     #                                           Member Function Definitions
+    #
+    # Constructor:  Initializes a motor driver with user-given or default values
+    #
     # Public Functions:-
     #   connect()           - Connect the motor driver to the bus
     #   disconnect()        - Disconnect the motor driver from the bus
@@ -46,8 +49,6 @@ class motor:
     #   show_last_command() - Print (to console) the last command sent to the motor driver
     #   show_details()      - Print (to console) the values of different parameters currently set for the motor driver
     #
-    # Constructor:  Initializes a motor driver with user-given or default values
-    #
     # Private Functions:-
     #   getUnitOfSpeedCode()    - returns the hex code of the given unit of speed.
     #   getDirectionCode()      - returns the hex code of the given direction.
@@ -56,8 +57,8 @@ class motor:
 
 
     # Class Constructor - Sets values of motor parameters when a motor object is created
-    # Slave Address is mandatory, while others are optional.
-    # If optional parameters are not given, they use the default values specified in the next line.
+    # ID & Slave Address are mandatory, while others parameters are optional.
+    # If optional parameters are not given, they use the default values specified in the constructor.
     def __init__(self, ID, SlaveAddr, BaudRate = 19200, Current = 1, Microstep = 1, Accl = 1, Decel = 1, Pitch = 50, Speed = 200, UnitOfSpeed = "RPM"):
         self.__id = ID
         self.__slave_addr = format(SlaveAddr, '#04X')[2:]
@@ -378,6 +379,17 @@ class motor:
         print("Go Home response", resp)
         self.__speed = Speed
         self.__unit_of_speed = UnitOfSpeed
+    #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+    def fbTilt(self):
+        #cycle 1 - forward tilt 30 degrees  > next cycle = 2
+        #cycle 2 - backward tilt 60 degrees > next cycle = 3
+        #cycle 3 - forward tilt 60 degrees  > next cycle = 2
+        # so the sequence of cycles is 1 -> 2 -> 3 -> 2-> 3 ->2 -> 3 ...
+
+        #command for cycle 1:
+        self.command = self.__slave_addr + "100025"
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 
 
