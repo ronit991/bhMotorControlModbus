@@ -67,7 +67,7 @@ class motor:
         self.__id = ID
         self.__slave_addr = format(SlaveAddr, '#04X')[2:]
         self.connect()
-        self.set_baudrate(BaudRate)
+        #self.set_baudrate(BaudRate)
         self.set_current(Current)
         self.set_microstep(Microstep)
         self.set_acceleration(Accl)
@@ -80,7 +80,7 @@ class motor:
 
     def connect(self):
         if(self.__status == "Not Connected"):
-            self.command = self.__slave_addr + "0600000001"  # connect command - <slave_address> 06 00 00 0001
+            self.command = self.__slave_addr + "0600000001"  # connect command - <slave_address> 06 0000 0001
             print("Connecting",self.__slave_addr, end="")
             self.__send()
             resp = readResponse(8)
@@ -151,10 +151,10 @@ class motor:
         print("\t Response", resp)
 
         if(resp != ( self.__slave_addr + "060004" + addr) ):
-                print("Invalid response for change slave address command... retrying")
-                self.set_slave_addr(SlaveAddr)
-            else:
-                print("Change Slave Address OK")
+            print("Invalid response for change slave address command... retrying")
+            self.set_slave_addr(SlaveAddr)
+        else:
+            print("Change Slave Address OK")
 
         self.__slave_addr = addr[2:]
     #——————————————————————————————————————————————————————————————————————————————————————————————————————————————————
@@ -674,5 +674,8 @@ def serialSend(mbCommand):
 def readResponse(noOfBytes):
     resp = ser.read(noOfBytes)
     response = binascii.hexlify(resp)
-    #return response.decode('ascii')    # Use this to get response with checksum
-    return response.decode('ascii')[:-4]     # Use this to get response without checksum
+    
+    #response = response.decode('ascii')         # Use this to get response with checksum
+    response = response.decode('ascii')[:-4]     # Use this to get response without checksum
+
+    return response.upper()
